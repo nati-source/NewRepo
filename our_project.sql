@@ -1,129 +1,102 @@
-create database project_Tracking_and_Managment;
-use  project_Tracking_and_Managment
+CREATE DATABASE project_tracking_and_management_system;
+USE project_tracking_and_management_system;
 
--- ADMIN table
+CREATE TABLE USER (
+    user_id VARCHAR(10) PRIMARY KEY,
+    firstName VARCHAR(20) NOT NULL,
+    middleName VARCHAR(20),
+    lastName VARCHAR(20),
+    email VARCHAR(30) UNIQUE NOT NULL,
+    password VARCHAR(20) NOT NULL,
+    status VARCHAR(10)
+);
+
 CREATE TABLE ADMIN (
-    admin_id INT PRIMARY KEY,
-    full_name VARCHAR(20),
-    firstName VARCHAR(20),
-    middleName VARCHAR(20),
-    lastName VARCHAR(20),
-    email VARCHAR(20),
-    password VARCHAR(20),
-    status VARCHAR(10),
-    createUserCount INT
+    admin_id VARCHAR(10) PRIMARY KEY,
+    createdUserCount INT,
+    FOREIGN KEY (admin_id) REFERENCES USER(user_id)
 );
 
--- HOD table
 CREATE TABLE HOD (
-    hod_id INT PRIMARY KEY,
-    full_name VARCHAR(20),
-    firstName VARCHAR(20),
-    middleName VARCHAR(20),
-    lastName VARCHAR(20),
-    email VARCHAR(20),
-    password VARCHAR(20),
-    status VARCHAR(10),
-    officeNumber VARCHAR(10)
+    hod_id VARCHAR(10) PRIMARY KEY,
+    officeNumber VARCHAR(10),
+    FOREIGN KEY (hod_id) REFERENCES USER(user_id)
 );
 
--- ADVISOR table
+
 CREATE TABLE ADVISOR (
-    advisor_id INT PRIMARY KEY,
-    full_name VARCHAR(20),
-    firstName VARCHAR(20),
-    middleName VARCHAR(20),
-    lastName VARCHAR(20),
-    email VARCHAR(20),
-    password VARCHAR(20),
-    status VARCHAR(10),
-    course VARCHAR(10)
+    advisor_id VARCHAR(10) PRIMARY KEY,
+    course VARCHAR(10),
+    FOREIGN KEY (advisor_id) REFERENCES USER(user_id)
 );
 
-
--- GROUP table
 CREATE TABLE GROUPS (
     group_id INT PRIMARY KEY,
-    group_name VARCHAR(20)
+    group_name VARCHAR(20) UNIQUE NOT NULL,
+    group_leader_id VARCHAR(10)
 );
 
-
--- STUDENT table (without multivalued attributes)
 CREATE TABLE STUDENT (
-    student_id INT PRIMARY KEY,
-    full_name VARCHAR(20),
-    firstName VARCHAR(20),
-    middleName VARCHAR(20),
-    lastName VARCHAR(20),
-    email VARCHAR(20),
-    password VARCHAR(20),
-    status VARCHAR(10),
-    group_id INT,
+    student_id VARCHAR(10) PRIMARY KEY,
+    gender CHAR(1),
+    section CHAR(1),
     GPA DECIMAL(3,2),
+    group_id INT,
+    FOREIGN KEY (student_id) REFERENCES USER(user_id),
     FOREIGN KEY (group_id) REFERENCES GROUPS(group_id)
 );
 
--- STUDENT multivalued attributes
+ALTER TABLE GROUPS
+ADD CONSTRAINT FK_GROUP_LEADER
+FOREIGN KEY (group_leader_id) REFERENCES STUDENT(student_id);
+
+
 CREATE TABLE STUDENT_LOCATION (
-    student_id INT,
+    student_id VARCHAR(10),
     location VARCHAR(20),
     PRIMARY KEY (student_id, location),
     FOREIGN KEY (student_id) REFERENCES STUDENT(student_id)
 );
 
 CREATE TABLE STUDENT_CONTRIBUTION (
-    contribution_id INT PRIMARY KEY,
-    student_id INT NOT NULL,
+    contribution_id VARCHAR(10) PRIMARY KEY,
+    student_id VARCHAR(10) NOT NULL,
     contribution TEXT NOT NULL,
     FOREIGN KEY (student_id) REFERENCES STUDENT(student_id)
 );
 
--- GROUP schedule (multivalued)
-CREATE TABLE GROUP_SCHEDULE (
-    group_id INT,
-    schedule_item VARCHAR(20),
-    PRIMARY KEY (group_id, schedule_item),
-    FOREIGN KEY (group_id) REFERENCES GROUPS(group_id)
-);
-
--- PROJECT table
 CREATE TABLE PROJECT (
-    project_id INT PRIMARY KEY,
-    projectName VARCHAR(30),
+    project_id VARCHAR(10) PRIMARY KEY,
+    projectName VARCHAR(30) NOT NULL,
     group_id INT UNIQUE,
     FOREIGN KEY (group_id) REFERENCES GROUPS(group_id)
 );
 
--- TASK table
 CREATE TABLE TASK (
-    task_id INT PRIMARY KEY,
-    student_id INT,
-    project_id INT,
+    task_id VARCHAR(10) PRIMARY KEY,
     task_title VARCHAR(30),
     do_date DATE,
-    FOREIGN KEY (student_id) REFERENCES STUDENT(student_id),
-    FOREIGN KEY (project_id) REFERENCES PROJECT(project_id)
+    project_id VARCHAR(10),
+    student_id VARCHAR(10),
+    FOREIGN KEY (project_id) REFERENCES PROJECT(project_id),
+    FOREIGN KEY (student_id) REFERENCES STUDENT(student_id)
 );
 
--- ASSIGN relationship (Advisor assigns Task to Student)
-CREATE TABLE ASSIGN (
-    advisor_id INT,
-    student_id INT,
-    task_id INT,
+    advisor_id VARCHAR(10),
+    task_id VARCHAR(10),
     assigned_at DATETIME,
-    PRIMARY KEY (advisor_id, student_id, task_id),
+    PRIMARY KEY (advisor_id, task_id),
     FOREIGN KEY (advisor_id) REFERENCES ADVISOR(advisor_id),
-    FOREIGN KEY (student_id) REFERENCES STUDENT(student_id),
     FOREIGN KEY (task_id) REFERENCES TASK(task_id)
 );
 
--- MESSAGE table (recursive relationship: any role can send/receive)
+
 CREATE TABLE MESSAGE (
-    message_id INT PRIMARY KEY,
-    sender_type VARCHAR(40),   -- 'ADMIN', 'HOD', 'ADVISOR', 'STUDENT'
-    sender_id INT,
-    receiver_type VARCHAR(40), -- same as above
-    receiver_id INT,
+    message_id VARCHAR(10) PRIMARY KEY,
+    sender_id VARCHAR(10),
+    receiver_id VARCHAR(10),
     message_body TEXT,
-    sent_at DATETIME
+    sent_at DATETIME,
+    FOREIGN KEY (sender_id) REFERENCES USER(user_id),
+    FOREIGN KEY (receiver_id) REFERENCES USER(user_id)
 );
